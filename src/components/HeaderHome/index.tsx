@@ -14,7 +14,7 @@ export function HeaderHome() {
   return (
     <View style={styles.container}>
       <Image
-        source={{ uri: 'https://github.com/rodrigorgtic.png' }}
+        source={{ uri: 'https://github.com/LuanHSL.png' }}
         style={styles.avatar}
       />
 

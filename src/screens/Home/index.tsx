@@ -1,6 +1,7 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAsyncStorage } from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 
 import { Card, CardProps } from '../../components/Card';
 import { HeaderHome } from '../../components/HeaderHome';
@@ -12,15 +13,59 @@ import { Button } from '../../components/Button';
 export function Home() {
   const [data, setData] = useState<CardProps[]>([]);
 
+  const { getItem, setItem, removeItem } = useAsyncStorage("@savepass:passwords")
+
   async function handleFetchData() {
-    const response = await AsyncStorage.getItem("@savepass:passwords");
+    const response = await getItem();
     const data = response ? JSON.parse(response) : [];
     setData(data);
   }
 
-  useEffect(() => {
+  async function handleRemove(id: string) {
+    try {
+      const response = await getItem()
+      const previousData = response ? JSON.parse(response) : []
+
+      const data = previousData.filter((item: CardProps) => item.id !== id)
+      await setItem(JSON.stringify(data))
+
+      Toast.show({
+        type: "success",
+        text1: "Removido com sucesso!"
+      })
+
+      setData(data)
+    } catch (e) {
+      console.error(e)
+      Toast.show({
+        type: "error",
+        text1: "Não foi possível remover esse item."
+      })
+    }
+  }
+
+  async function handleClear() {
+    try {
+      await removeItem()
+
+      Toast.show({
+        type: "success",
+        text1: "A lista foi limpada com sucesso!"
+      })
+
+      setData([])
+    } catch (e) {
+      console.error(e)
+      Toast.show({
+        type: "error",
+        text1: "Não foi possível limpar essa lista."
+      })
+    }
+  }
+
+  useFocusEffect(useCallback(() => {
     handleFetchData();
-  }, []);
+  }, []));
 
 
   return (
@@ -45,7 +90,7 @@ export function Home() {
         renderItem={({ item }) =>
           <Card
             data={item}
-            onPress={() => {}}
+            onPress={() => handleRemove(item.id)}
           />
         }
       />
@@ -53,6 +98,7 @@ export function Home() {
       <View style={styles.footer}>
         <Button
           title="Limpar lista"
+          onPress={() => handleClear()}
         />
       </View>
     </View>
